@@ -3,37 +3,26 @@ import matplotlib.pyplot as plt
 import random
 import scipy.io
 
+class LPF:
 
-class move_average_filter:
-
-    def __init__(self, n=10):
-        self.init=True
-        self.number = n
-        self.buf = []
-        self.prevAgv = 0
-        self.avg = 0
-        pass
+    def __init__(self, alpha):
+        ''' alpha range should be (0 < alpha < 1)'''
+        self.prevX = 0
+        self.alpha = alpha
+        self.init = True
 
     def run(self, x):
         if self.init == True:
-            [self.buf.append(x) for i in range(0, self.number)]
-            self.prevAgv = x
-            self.avg = x
+            self.prevX = x
             self.init = False
 
-        self.buf.pop(0)
-        self.buf.append(x)
-        self.prevAgv = self.avg
+        xlpf = self.alpha * self.prevX + (1-self.alpha)*x
 
-        self.avg = self.prevAgv + (x - self.buf[0])/self.number
+        self.prevX = xlpf
 
-        return self.avg
+        return self.prevX
 
-
-# test moving_average_filter --------------------------------------------------------------------------------------------------
-
-# Test시, n을 낮추면 낮출수록 Raw 데이터를 따라가야하는데,
-# 재귀식의 영향으로 계산이 안됨.
+# test average_filter --------------------------------------------------------------------------------------------------
 
 class Alt:
     def __init__(self):
@@ -68,10 +57,11 @@ Xsaved = []
 Xmsaved = []
 
 alt =Alt()
-filter = move_average_filter(10)
+
+lpf = LPF(0.7)
 for i in range(0, Nsample):
     xm = alt.get_sonar()
-    x = filter.run(xm)
+    x = lpf.run(xm)
     Xsaved.append(x)
     Xmsaved.append(xm)
 
@@ -79,5 +69,5 @@ dt = 0.02
 t = frange(0, (Nsample * dt)-dt, dt)
 
 plt.plot(t, Xmsaved)
-plt.plot(t, Xsaved, 'ro')
+plt.plot(t, Xsaved, 'r')
 plt.show()
